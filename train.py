@@ -18,6 +18,7 @@ import seaborn as sns
 np.random.seed(42)
 tf.random.set_seed(42)
 
+# Load dataset
 def load_dataset(data_path, img_size=(224, 224)):
     """
     Load images from the dataset directory

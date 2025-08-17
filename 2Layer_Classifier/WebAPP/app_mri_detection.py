@@ -15,7 +15,7 @@ app.secret_key = 'your-secret-key-here'
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
-MODEL_PATH = 'mri_2layer_classifier.h5'
+MODEL_PATH = '../Models/mri_2layer_classifier.h5'
 
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

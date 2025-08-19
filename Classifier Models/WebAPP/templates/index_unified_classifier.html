@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified MRI Classifier - Multi-Model Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .model-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .selector-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .selector-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .model-switch {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .model-option {
+            padding: 10px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .model-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .model-option.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .model-option.variationA.active {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+        
+        .model-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .model-info.variationA {
+            border-left-color: #e74c3c;
+        }
+        
+        .model-info h4 {
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .model-info-details {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .model-info-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .model-status {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-ready {
+            background: #28a745;
+        }
+        
+        .status-error {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px;
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #3498db;
+            background: #f8f9ff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .model-used-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .model-used-badge.original {
+            background: #3498db;
+        }
+        
+        .model-used-badge.variationA {
+            background: #e74c3c;
+        }
+        
+        .result-status {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .cancer-detected {
+            color: #dc3545;
+        }
+        
+        .no-cancer {
+            color: #28a745;
+        }
+        
+        .not-mri {
+            color: #6c757d;
+        }
+        
+        .confidence {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .interpretation {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .probabilities {
+            margin-top: 20px;
+        }
+        
+        .probability-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .prob-label {
+            width: 120px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+        
+        .prob-bar {
+            flex: 1;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 15px;
+            height: 8px;
+        }
+        
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2c3e50);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        .prob-fill.variationA {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        
+        .prob-value {
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+        
+        .footer {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .comparison-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .comparison-info h5 {
+            color: #0c5460;
+            margin-bottom: 8px;
+        }
+        
+        .comparison-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            color: #0c5460;
+        }
+        
+        .comparison-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .switching-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .dual-results {
+            display: flex;
+            gap: 30px;
+            justify-content: space-between;
+        }
+
+        .model-result {
+            flex: 1;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            text-align: center;
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .model-header h3 {
+            font-size: 1.8em;
+            font-weight: 400;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-badge {
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .model-badge.variationA {
+            background: #e74c3c;
+        }
+
+        .result-content {
+            margin-bottom: 20px;
+        }
+
+        .prediction-info, .confidence-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        .prediction-label, .confidence-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .prediction-value, .confidence-value {
+            font-weight: bold;
+            color: #e74c3c; /* Primary color for confidence */
+        }
+
+        .interpretation {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #444;
+        }
+        
+        .probability-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .probability-label {
+            min-width: 100px;
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .probability-bar-container {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+        }
+        
+        .probability-value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        
+        .loading-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="switching-indicator" id="switchingIndicator">
+        🔄 Switching models...
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Unified MRI Classifier</h1>
+            <p>Dual-model AI-powered brain tumor detection with simultaneous predictions</p>
+        </div>
+        
+        <div class="model-selector">
+            <div class="selector-header">
+                <div class="selector-title">🔄 Active AI Models:</div>
+            </div>
+            
+            <div class="models-info" id="modelsInfo">
+                <div class="loading-message">Loading model information...</div>
+            </div>
+        </div>
+        
+        <div class="upload-section">
+            <div class="model-status" id="modelStatus">
+                <div class="status-indicator status-loading"></div>
+                <span>Checking model status...</span>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drag & Drop your MRI image here</div>
+                <div class="upload-subtext">or click to browse files</div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <div id="loadingText">AI model is analyzing your image...</div>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="dual-results">
+                    <div class="model-result original">
+                        <div class="model-header">
+                            <h3>📊 Original 2Layer Classifier</h3>
+                            <div class="model-badge">Original</div>
+                        </div>
+                        <div class="result-content" id="originalResult">
+                            <div class="prediction-info">
+                                <div class="prediction-label">Prediction:</div>
+                                <div class="prediction-value" id="originalPrediction">-</div>
+                            </div>
+                            <div class="confidence-info">
+                                <div class="confidence-label">Confidence:</div>
+                                <div class="confidence-value" id="originalConfidence">-</div>
+                            </div>
+                            <div class="interpretation" id="originalInterpretation">-</div>
+                        </div>
+                        <div class="probabilities">
+                            <h4>📊 Class Probabilities:</h4>
+                            <div id="originalProbabilities"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-result variationA">
+                        <div class="model-header">
+                            <h3>✨ VariationA Enhanced Classifier</h3>
+                            <div class="model-badge variationA">Enhanced</div>
+                        </div>
+                        <div class="result-content" id="variationAResult">
+                            <div class="prediction-info">
+                                <div class="prediction-label">Prediction:</div>
+                                <div class="prediction-value" id="variationAPrediction">-</div>
+                            </div>
+                            <div class="confidence-info">
+                                <div class="confidence-label">Confidence:</div>
+                                <div class="confidence-value" id="variationAConfidence">-</div>
+                            </div>
+                            <div class="interpretation" id="variationAInterpretation">-</div>
+                        </div>
+                        <div class="probabilities">
+                            <h4>📊 Class Probabilities:</h4>
+                            <div id="variationAProbabilities"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="error" id="error"></div>
+        </div>
+        
+        <div class="footer">
+            <p>⚠️ <strong>For educational and research purposes only.</strong> Not for medical diagnosis.</p>
+            <p>🔬 Unified Multi-Model Deep Learning System</p>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const modelStatus = document.getElementById('modelStatus');
+        const modelsInfo = document.getElementById('modelsInfo');
+        
+        let availableModels = {};
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableModels();
+            checkModelsStatus();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // File input change handler
+            fileInput.addEventListener('change', handleFile);
+            
+            // Drag and drop handlers
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+        }
+        
+        function loadAvailableModels() {
+            fetch('/get_models')
+                .then(response => response.json())
+                .then(data => {
+                    availableModels = data.models;
+                    updateModelsInfo();
+                })
+                .catch(err => console.error('Error loading models:', err));
+        }
+        
+        function updateModelsInfo() {
+            const modelsInfoDiv = document.getElementById('modelsInfo');
+            let html = '';
+            
+            for (const [key, model] of Object.entries(availableModels)) {
+                html += `
+                    <div class="model-info ${key}">
+                        <h4>${model.name}</h4>
+                        <div class="model-info-details">
+                            <div class="model-info-detail">
+                                <span>📊</span>
+                                <span>${model.training_data}</span>
+                            </div>
+                            <div class="model-info-detail">
+                                <span>🎯</span>
+                                <span>${model.expected_accuracy}</span>
+                            </div>
+                            <div class="model-info-detail">
+                                <span>📝</span>
+                                <span>${model.description}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            modelsInfoDiv.innerHTML = html;
+        }
+        
+        function checkModelsStatus() {
+            fetch('/check_models')
+                .then(response => response.json())
+                .then(data => {
+                    const indicator = modelStatus.querySelector('.status-indicator');
+                    const text = modelStatus.querySelector('span');
+                    
+                    if (data.status === 'success') {
+                        indicator.className = 'status-indicator status-ready';
+                        text.textContent = `✅ ${data.message} (${data.num_classes} classes)`;
+                    } else {
+                        indicator.className = 'status-indicator status-error';
+                        text.textContent = `❌ ${data.message}`;
+                    }
+                })
+                .catch(err => {
+                    const indicator = modelStatus.querySelector('.status-indicator');
+                    const text = modelStatus.querySelector('span');
+                    indicator.className = 'status-indicator status-error';
+                    text.textContent = '❌ Error checking models status';
+                });
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+        
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+        
+        function processFile(file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file.');
+                return;
+            }
+            
+            // Show loading
+            hideAll();
+            loading.style.display = 'block';
+            
+            // Update loading text for both models
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = 'Both AI models are analyzing your image...';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Upload and predict
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideAll();
+                if (data.success) {
+                    showResults(data);
+                } else {
+                    showError(data.error || 'Unknown error occurred');
+                }
+            })
+            .catch(err => {
+                hideAll();
+                showError('Network error: ' + err.message);
+            });
+        }
+        
+        function showResults(data) {
+            results.style.display = 'block';
+            
+            // Display results for both models
+            if (data.results.original && !data.results.original.error) {
+                displayModelResult('original', data.results.original, data.interpretations.original);
+            }
+            
+            if (data.results.variationA && !data.results.variationA.error) {
+                displayModelResult('variationA', data.results.variationA, data.interpretations.variationA);
+            }
+        }
+        
+        function displayModelResult(modelKey, result, interpretation) {
+            const predictionElement = document.getElementById(`${modelKey}Prediction`);
+            const confidenceElement = document.getElementById(`${modelKey}Confidence`);
+            const interpretationElement = document.getElementById(`${modelKey}Interpretation`);
+            const probabilitiesElement = document.getElementById(`${modelKey}Probabilities`);
+            
+            // Update prediction and confidence
+            predictionElement.textContent = result.predicted_class.toUpperCase();
+            confidenceElement.textContent = `${(result.confidence * 100).toFixed(1)}%`;
+            interpretationElement.textContent = interpretation;
+            
+            // Update probabilities
+            showModelProbabilities(probabilitiesElement, result.class_probabilities);
+        }
+        
+        function showModelProbabilities(container, probabilities) {
+            container.innerHTML = '';
+            
+            // Sort probabilities by value (descending)
+            const sortedProbs = Object.entries(probabilities)
+                .sort(([,a], [,b]) => b - a);
+            
+            sortedProbs.forEach(([className, probability]) => {
+                const item = document.createElement('div');
+                item.className = 'probability-item';
+                
+                const percentage = (probability * 100).toFixed(1);
+                const barWidth = (probability * 100).toFixed(0);
+                
+                item.innerHTML = `
+                    <div class="probability-label">${className.replace('_', ' ').toUpperCase()}</div>
+                    <div class="probability-bar-container">
+                        <div class="probability-bar" style="width: ${barWidth}%"></div>
+                    </div>
+                    <div class="probability-value">${percentage}%</div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        function getClassDisplayName(className) {
+            const displayNames = {
+                'glioma': 'Glioma',
+                'meningioma': 'Meningioma',
+                'notumor': 'No Tumor',
+                'pituitary': 'Pituitary',
+                'not_mri': 'Not MRI'
+            };
+            return displayNames[className] || className;
+        }
+        
+        function showError(message) {
+            error.style.display = 'block';
+            error.textContent = '❌ ' + message;
+        }
+        
+        function hideAll() {
+            loading.style.display = 'none';
+            results.style.display = 'none';
+            error.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+======================================================================
+VARIATION A DATASET CREATION SUMMARY (800 per class)
+======================================================================
+GLIOMA         :  800 original ->  800 augmented
+MENINGIOMA     :  800 original ->  800 augmented
+NOTUMOR        :  800 original ->  800 augmented
+PITUITARY      :  800 original ->  800 augmented
+NOT_MRI        :   68 original ->   68 augmented
+----------------------------------------------------------------------
+TOTAL          : 3268 original -> 3268 augmented
+======================================================================

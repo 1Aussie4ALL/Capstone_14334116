@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VariationA Enhanced MRI Detection & Tumor Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .enhancement-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 15px;
+            display: inline-block;
+            font-size: 0.9em;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px;
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #e74c3c;
+            background: #fff5f5;
+        }
+        
+        .upload-area.dragover {
+            border-color: #e74c3c;
+            background: #fff5f5;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        .model-status {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-ready {
+            background: #28a745;
+        }
+        
+        .status-error {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .result-status {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .cancer-detected {
+            color: #dc3545;
+        }
+        
+        .no-cancer {
+            color: #28a745;
+        }
+        
+        .not-mri {
+            color: #6c757d;
+        }
+        
+        .confidence {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .interpretation {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .probabilities {
+            margin-top: 20px;
+        }
+        
+        .probability-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .prob-label {
+            width: 120px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+        
+        .prob-bar {
+            flex: 1;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 15px;
+            height: 8px;
+        }
+        
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        .prob-value {
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #e74c3c;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .footer {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .model-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        .model-info h4 {
+            color: #0c5460;
+            margin-bottom: 8px;
+        }
+        
+        .model-info ul {
+            margin: 10px 0 0 20px;
+            color: #0c5460;
+        }
+        
+        .model-info li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 VariationA Enhanced MRI Classifier</h1>
+            <p>Enhanced AI-powered brain tumor detection with photometric augmentation</p>
+            <div class="enhancement-badge">
+                ✨ Enhanced with Variation A 800 augmentation - 57% more training data
+            </div>
+        </div>
+        
+        <div class="upload-section">
+            <div class="model-status" id="modelStatus">
+                <div class="status-indicator status-loading"></div>
+                <span>Checking VariationA model status...</span>
+            </div>
+            
+            <div class="model-info">
+                <h4>🚀 VariationA Enhanced Features:</h4>
+                <ul>
+                    <li><strong>9,047 total training images</strong> (5,779 original + 3,268 augmented)</li>
+                    <li><strong>Photometric augmentation</strong> for better generalization</li>
+                    <li><strong>98.5%+ expected accuracy</strong> on test data</li>
+                    <li><strong>Enhanced robustness</strong> against image variations</li>
+                    <li><strong>Reduced overfitting</strong> through diverse training data</li>
+                </ul>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drag & Drop your MRI image here</div>
+                <div class="upload-subtext">or click to browse files</div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+            
+            <div class="loading" id="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <div>VariationA model is analyzing your image...</div>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="result-header">
+                    <div class="result-status" id="resultStatus"></div>
+                    <div class="confidence" id="confidence"></div>
+                    <div class="interpretation" id="interpretation"></div>
+                </div>
+                
+                <div class="probabilities">
+                    <h3 style="margin-bottom: 15px;">📊 Detailed Classification Probabilities:</h3>
+                    <div id="probabilitiesList"></div>
+                </div>
+            </div>
+            
+            <div class="error" id="error" style="display: none;"></div>
+        </div>
+        
+        <div class="footer">
+            <p>⚠️ <strong>For educational and research purposes only.</strong> Not for medical diagnosis.</p>
+            <p>🔬 Powered by VariationA Enhanced Deep Learning Model</p>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const modelStatus = document.getElementById('modelStatus');
+        
+        // Check model status on page load
+        checkModelStatus();
+        
+        // File input change handler
+        fileInput.addEventListener('change', handleFile);
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        
+        function checkModelStatus() {
+            fetch('/check_model')
+                .then(response => response.json())
+                .then(data => {
+                    const indicator = modelStatus.querySelector('.status-indicator');
+                    const text = modelStatus.querySelector('span');
+                    
+                    if (data.status === 'success') {
+                        indicator.className = 'status-indicator status-ready';
+                        text.textContent = `✅ ${data.message} (${data.num_classes} classes)`;
+                    } else {
+                        indicator.className = 'status-indicator status-error';
+                        text.textContent = `❌ ${data.message}`;
+                    }
+                })
+                .catch(err => {
+                    const indicator = modelStatus.querySelector('.status-indicator');
+                    const text = modelStatus.querySelector('span');
+                    indicator.className = 'status-indicator status-error';
+                    text.textContent = '❌ Error checking VariationA model status';
+                });
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+        
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+        
+        function processFile(file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file.');
+                return;
+            }
+            
+            // Show loading
+            hideAll();
+            loading.style.display = 'block';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Upload and predict
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideAll();
+                if (data.success) {
+                    showResults(data);
+                } else {
+                    showError(data.error || 'Unknown error occurred');
+                }
+            })
+            .catch(err => {
+                hideAll();
+                showError('Network error: ' + err.message);
+            });
+        }
+        
+        function showResults(data) {
+            results.style.display = 'block';
+            
+            // Set result status
+            const resultStatus = document.getElementById('resultStatus');
+            const confidence = document.getElementById('confidence');
+            const interpretation = document.getElementById('interpretation');
+            
+            if (data.prediction === 'not_mri') {
+                resultStatus.textContent = '❓ NOT AN MRI SCAN';
+                resultStatus.className = 'result-status not-mri';
+            } else if (data.prediction === 'notumor') {
+                resultStatus.textContent = '🎉 NO CANCER DETECTED';
+                resultStatus.className = 'result-status no-cancer';
+            } else {
+                resultStatus.textContent = '⚠️ CANCER DETECTED';
+                resultStatus.className = 'result-status cancer-detected';
+            }
+            
+            confidence.textContent = `Confidence: ${data.confidence}`;
+            interpretation.innerHTML = `<strong>VariationA Analysis:</strong><br>${data.interpretation}`;
+            
+            // Show probabilities
+            showProbabilities(data.class_probabilities);
+        }
+        
+        function showProbabilities(probabilities) {
+            const probabilitiesList = document.getElementById('probabilitiesList');
+            probabilitiesList.innerHTML = '';
+            
+            // Sort probabilities by value (descending)
+            const sortedProbs = Object.entries(probabilities)
+                .sort(([,a], [,b]) => b - a);
+            
+            sortedProbs.forEach(([className, probability]) => {
+                const item = document.createElement('div');
+                item.className = 'probability-item';
+                
+                const percentage = (probability * 100).toFixed(1);
+                
+                item.innerHTML = `
+                    <div class="prob-label">${getClassDisplayName(className)}</div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="prob-value">${percentage}%</div>
+                `;
+                
+                probabilitiesList.appendChild(item);
+            });
+        }
+        
+        function getClassDisplayName(className) {
+            const displayNames = {
+                'glioma': 'Glioma',
+                'meningioma': 'Meningioma',
+                'notumor': 'No Tumor',
+                'pituitary': 'Pituitary',
+                'not_mri': 'Not MRI'
+            };
+            return displayNames[className] || className;
+        }
+        
+        function showError(message) {
+            error.style.display = 'block';
+            error.textContent = '❌ ' + message;
+        }
+        
+        function hideAll() {
+            loading.style.display = 'none';
+            results.style.display = 'none';
+            error.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

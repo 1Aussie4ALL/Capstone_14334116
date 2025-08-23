@@ -38,6 +38,19 @@ MODELS = {
         'training_data': '9,047 images (5,779 original + 3,268 augmented)',
         'expected_accuracy': '98.5%+',
         'color': '#e74c3c'
+    },
+    'variationB': {
+        'name': 'VariationB Enhanced Classifier',
+        'path': '../VariationB_Enhanced/Models/mri_variationB_classifier.h5',
+        'alternative_paths': [
+            '../VariationB_Enhanced/Models/mri_variationB_classifier_final.h5',
+            'mri_variationB_classifier.h5',
+            'mri_variationB_classifier_final.h5'
+        ],
+        'description': 'Enhanced classifier with geometric augmentation',
+        'training_data': '9,047 images (5,779 original + 3,268 augmented)',
+        'expected_accuracy': '97.4%+',
+        'color': '#27ae60'
     }
 }
 
@@ -79,11 +92,11 @@ def load_all_models():
         except Exception as e:
             print(f"❌ Error loading {model_config['name']}: {e}")
     
-    if len(models) == 2:
-        print("🎉 Both models loaded successfully!")
+    if len(models) >= 2:
+        print(f"🎉 {len(models)} models loaded successfully!")
         return True
     else:
-        print(f"⚠️ Only {len(models)} out of 2 models loaded")
+        print(f"⚠️ Only {len(models)} out of {len(MODELS)} models loaded")
         return False
 
 def preprocess_image(image_path):
@@ -300,6 +313,28 @@ def model_comparison():
                     'Reduced overfitting',
                     'Improved robustness'
                 ]
+            },
+            'original_vs_variationB': {
+                'data_increase': '57%',
+                'accuracy_improvement': '2.4%+',
+                'training_method': 'Geometric augmentation',
+                'benefits': [
+                    'Anatomically plausible variations',
+                    'Position and orientation robustness',
+                    'Realistic scanning conditions',
+                    'Spatial transformation handling'
+                ]
+            },
+            'variationA_vs_variationB': {
+                'augmentation_type': 'Photometric vs Geometric',
+                'focus': 'Appearance vs Structure',
+                'use_case': 'Lighting variations vs Positioning variations',
+                'benefits': [
+                    'Complementary approaches',
+                    'Different augmentation strategies',
+                    'Enhanced model ensemble potential',
+                    'Comprehensive data coverage'
+                ]
             }
         }
     })
@@ -315,12 +350,12 @@ if __name__ == '__main__':
         print(f"     - Expected accuracy: {config['expected_accuracy']}")
     print("=" * 60)
     
-    # Load both models at startup
+    # Load all models at startup
     if load_all_models():
         print("🌐 Starting web server...")
         print("📱 Open your browser and go to: http://localhost:5000")
-        print("🔄 Both models will provide predictions simultaneously!")
-        print("📤 Upload any image to get side-by-side predictions from both classifiers!")
+        print("🔄 All three models will provide predictions simultaneously!")
+        print("📤 Upload any image to get predictions from all three classifiers!")
         
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:

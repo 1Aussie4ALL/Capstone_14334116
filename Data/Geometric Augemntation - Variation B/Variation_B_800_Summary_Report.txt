@@ -1,0 +1,23 @@
+======================================================================
+VARIATION B DATASET CREATION SUMMARY (800 per class)
+GEOMETRIC AUGMENTATION - ANATOMICALLY PLAUSIBLE
+======================================================================
+GLIOMA         :  800 original ->  800 augmented
+MENINGIOMA     :  800 original ->  800 augmented
+NOTUMOR        :  800 original ->  800 augmented
+PITUITARY      :  800 original ->  800 augmented
+NOT_MRI        :   68 original ->   68 augmented
+----------------------------------------------------------------------
+TOTAL          : 3268 original -> 3268 augmented
+======================================================================
+
+GEOMETRIC AUGMENTATION DETAILS:
+----------------------------------------
+• Rotate: ±7° (cap at ±10°) - p≈0.3
+• Translate: ≤3% of width/height - p≈0.3
+• Scale/zoom: 0.95–1.05 (cap at 0.9–1.1) - p≈0.3
+• Horizontal flip: p=0.3
+• Light elastic/affine: α≈1–3 px, σ≈6–8 px - p=0.2
+• 1-2 augmentations per image (sampled)
+• No vertical flips (anatomically implausible)
+• Combined transforms kept subtle for physiological realism

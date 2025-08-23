@@ -424,9 +424,9 @@
             to { transform: translateX(0); }
         }
 
-        .dual-results {
+        .triple-results {
             display: flex;
-            gap: 30px;
+            gap: 20px;
             justify-content: space-between;
         }
 
@@ -435,8 +435,9 @@
             background: #fff;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            padding: 25px;
+            padding: 20px;
             text-align: center;
+            min-width: 0;
         }
 
         .model-header {
@@ -449,7 +450,7 @@
         }
 
         .model-header h3 {
-            font-size: 1.8em;
+            font-size: 1.5em;
             font-weight: 400;
             color: #333;
             margin-bottom: 5px;
@@ -466,6 +467,10 @@
 
         .model-badge.variationA {
             background: #e74c3c;
+        }
+        
+        .model-badge.variationB {
+            background: #27ae60;
         }
 
         .result-content {
@@ -550,7 +555,7 @@
     <div class="container">
         <div class="header">
             <h1>🧠 Unified MRI Classifier</h1>
-            <p>Dual-model AI-powered brain tumor detection with simultaneous predictions</p>
+            <p>Triple-model AI-powered brain tumor detection with simultaneous predictions</p>
         </div>
         
         <div class="model-selector">
@@ -585,7 +590,7 @@
             </div>
             
             <div class="results" id="results">
-                <div class="dual-results">
+                <div class="triple-results">
                     <div class="model-result original">
                         <div class="model-header">
                             <h3>📊 Original 2Layer Classifier</h3>
@@ -627,6 +632,28 @@
                         <div class="probabilities">
                             <h4>📊 Class Probabilities:</h4>
                             <div id="variationAProbabilities"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-result variationB">
+                        <div class="model-header">
+                            <h3>🔧 VariationB Enhanced Classifier</h3>
+                            <div class="model-badge variationB">Enhanced</div>
+                        </div>
+                        <div class="result-content" id="variationBResult">
+                            <div class="prediction-info">
+                                <div class="prediction-label">Prediction:</div>
+                                <div class="prediction-value" id="variationBPrediction">-</div>
+                            </div>
+                            <div class="confidence-info">
+                                <div class="confidence-label">Confidence:</div>
+                                <div class="confidence-value" id="variationBConfidence">-</div>
+                            </div>
+                            <div class="interpretation" id="variationBInterpretation">-</div>
+                        </div>
+                        <div class="probabilities">
+                            <h4>📊 Class Probabilities:</h4>
+                            <div id="variationBProbabilities"></div>
                         </div>
                     </div>
                 </div>
@@ -771,7 +798,7 @@
             
             // Update loading text for both models
             const loadingText = document.getElementById('loadingText');
-            loadingText.textContent = 'Both AI models are analyzing your image...';
+            loadingText.textContent = 'All three AI models are analyzing your image...';
             
             // Create form data
             const formData = new FormData();
@@ -800,13 +827,17 @@
         function showResults(data) {
             results.style.display = 'block';
             
-            // Display results for both models
+            // Display results for all three models
             if (data.results.original && !data.results.original.error) {
                 displayModelResult('original', data.results.original, data.interpretations.original);
             }
             
             if (data.results.variationA && !data.results.variationA.error) {
                 displayModelResult('variationA', data.results.variationA, data.interpretations.variationA);
+            }
+            
+            if (data.results.variationB && !data.results.variationB.error) {
+                displayModelResult('variationB', data.results.variationB, data.interpretations.variationB);
             }
         }
         

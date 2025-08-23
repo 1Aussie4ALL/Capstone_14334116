@@ -155,7 +155,7 @@ def predict_with_model(model, image_array, model_name):
         return None
 
 def predict_image(image_path):
-    """Make predictions with both models"""
+    """Make predictions with all three models"""
     try:
         # Preprocess image
         image_array = preprocess_image(image_path)
@@ -164,7 +164,7 @@ def predict_image(image_path):
         
         results = {}
         
-        # Get predictions from both models
+        # Get predictions from all three models
         for model_key, model in models.items():
             model_name = MODELS[model_key]['name']
             result = predict_with_model(model, image_array, model_name)
@@ -224,7 +224,7 @@ def check_models():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Handle file upload and prediction with both models"""
+    """Handle file upload and prediction with all three models"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'})
     
@@ -239,7 +239,7 @@ def upload_file():
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
             
-            # Make predictions with both models
+            # Make predictions with all three models
             results, error = predict_image(filepath)
             
             if error:
@@ -248,7 +248,7 @@ def upload_file():
             # Clean up uploaded file
             os.remove(filepath)
             
-            # Prepare response with both models' results
+            # Prepare response with all three models' results
             response = {
                 'success': True,
                 'filename': filename,

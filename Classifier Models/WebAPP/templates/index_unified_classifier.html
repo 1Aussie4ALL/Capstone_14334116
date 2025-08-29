@@ -545,6 +545,62 @@
             color: #666;
             font-style: italic;
         }
+        
+        .image-controls {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .current-image-info {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #495057;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .analyze-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .analyze-btn:hover {
+            background: linear-gradient(135deg, #218838, #1ea085);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .clear-btn {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            background: linear-gradient(135deg, #c82333, #e8590c);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -582,6 +638,20 @@
                 <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                     Choose File
                 </button>
+            </div>
+            
+            <div class="image-controls" id="imageControls" style="display: none;">
+                <div class="current-image-info" id="currentImageInfo">
+                    <span>📷 Currently analyzing: <strong id="currentImageName">-</strong></span>
+                </div>
+                <div class="control-buttons">
+                    <button class="control-btn analyze-btn" onclick="analyzeCurrentImage()">
+                        🔄 Re-analyze Current Image
+                    </button>
+                    <button class="control-btn clear-btn" onclick="clearCurrentImage()">
+                        🗑️ Clear Image
+                    </button>
+                </div>
             </div>
             
             <div class="loading" id="loading">
@@ -684,6 +754,7 @@
             loadAvailableModels();
             checkModelsStatus();
             setupEventListeners();
+            checkCurrentImage();
         });
         
         function setupEventListeners() {
@@ -792,6 +863,11 @@
                 return;
             }
             
+            // Prevent double uploads by temporarily disabling the upload area
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.style.pointerEvents = 'none';
+            uploadArea.style.opacity = '0.6';
+            
             // Show loading
             hideAll();
             loading.style.display = 'block';
@@ -816,16 +892,27 @@
                     showResults(data);
                 } else {
                     showError(data.error || 'Unknown error occurred');
+                    // Re-enable upload area on error
+                    uploadArea.style.pointerEvents = 'auto';
+                    uploadArea.style.opacity = '1';
                 }
             })
             .catch(err => {
                 hideAll();
                 showError('Network error: ' + err.message);
+                // Re-enable upload area on error
+                uploadArea.style.pointerEvents = 'auto';
+                uploadArea.style.opacity = '1';
             });
         }
         
         function showResults(data) {
             results.style.display = 'block';
+            
+            // Show image controls for the uploaded image
+            if (data.filename) {
+                showImageControls(data.filename);
+            }
             
             // Display results for all three models
             if (data.results.original && !data.results.original.error) {
@@ -838,6 +925,11 @@
             
             if (data.results.variationB && !data.results.variationB.error) {
                 displayModelResult('variationB', data.results.variationB, data.interpretations.variationB);
+            }
+            
+            // Show success message if available
+            if (data.message) {
+                showMessage(data.message);
             }
         }
         
@@ -902,6 +994,120 @@
             loading.style.display = 'none';
             results.style.display = 'none';
             error.style.display = 'none';
+        }
+        
+        function analyzeCurrentImage() {
+            // Show loading
+            hideAll();
+            loading.style.display = 'block';
+            
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = 'Re-analyzing current image with all three AI models...';
+            
+            // Call the analyze_current endpoint
+            fetch('/analyze_current', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideAll();
+                if (data.success) {
+                    showResults(data);
+                } else {
+                    showError(data.error || 'Unknown error occurred');
+                }
+            })
+            .catch(err => {
+                hideAll();
+                showError('Network error: ' + err.message);
+            });
+        }
+        
+        function clearCurrentImage() {
+            // Call the clear_image endpoint
+            fetch('/clear_image', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide the image controls
+                    document.getElementById('imageControls').style.display = 'none';
+                    
+                    // Reset the upload area
+                    document.getElementById('uploadArea').style.display = 'block';
+                    
+                    // Clear any displayed results
+                    hideAll();
+                    
+                    // Clear any file input
+                    const fileInput = document.getElementById('fileInput');
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
+                    
+                    // Show success message
+                    showMessage('✅ ' + data.message);
+                } else {
+                    showError(data.error || 'Failed to clear image');
+                }
+            })
+            .catch(err => {
+                showError('Network error: ' + err.message);
+            });
+        }
+        
+        function showMessage(message) {
+            error.style.display = 'block';
+            error.style.color = '#28a745';
+            error.style.border = '2px solid #28a745';
+            error.style.background = '#d4edda';
+            error.textContent = message;
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                error.style.display = 'none';
+            }, 3000);
+        }
+        
+        function showImageControls(filename) {
+            // Update the filename display
+            document.getElementById('currentImageName').textContent = filename;
+            
+            // Hide upload area completely
+            document.getElementById('uploadArea').style.display = 'none';
+            
+            // Show image controls
+            document.getElementById('imageControls').style.display = 'block';
+            
+            // Also hide any file input that might be lingering
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.value = ''; // Clear any selected file
+            }
+        }
+        
+        function checkCurrentImage() {
+            // Check if there's already an uploaded image
+            fetch('/get_current_image_info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_image) {
+                        showImageControls(data.filename);
+                        console.log('Found existing image:', data.filename);
+                    } else {
+                        // Ensure upload area is visible if no image
+                        document.getElementById('uploadArea').style.display = 'block';
+                        document.getElementById('imageControls').style.display = 'none';
+                        console.log('No existing image found');
+                    }
+                })
+                .catch(err => {
+                    console.log('No current image or error checking:', err);
+                    // Ensure upload area is visible on error
+                    document.getElementById('uploadArea').style.display = 'block';
+                    document.getElementById('imageControls').style.display = 'none';
+                });
         }
     </script>
 </body>

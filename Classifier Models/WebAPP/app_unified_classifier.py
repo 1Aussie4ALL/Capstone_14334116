@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from flask import Flask, render_template, request, jsonify, flash
+from flask import Flask, render_template, request, jsonify, flash, session
 from werkzeug.utils import secure_filename
 import base64
 from PIL import Image
@@ -20,7 +20,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
 MODELS = {
     'original': {
         'name': 'Original 2Layer Classifier',
-        'path': '../2Layer_Classifier/Models/mri_2layer_classifier.h5',
+        'path': '../2Layer_Classifier/Models/mri_2layer_classifier_final.h5',
         'description': 'Original MRI classifier trained on 5,779 images',
         'training_data': '5,779 images',
         'expected_accuracy': '95%+',
@@ -28,9 +28,9 @@ MODELS = {
     },
     'variationA': {
         'name': 'VariationA Enhanced Classifier',
-        'path': '../VariationA_Enchanced/Models/mri_variationA_classifier.h5',
+        'path': '../VariationA_Enchanced/Models/mri_variationA_classifier_final.h5',
         'alternative_paths': [
-            '../VariationA_Enchanced/Models/mri_variationA_classifier_final.h5',
+            '../VariationA_Enchanced/Models/mri_variationA_classifier.h5',
             'mri_variationA_classifier.h5',
             'mri_variationA_classifier_final.h5'
         ],
@@ -69,19 +69,29 @@ def load_all_models():
     global models
     
     print("🔄 Loading both models simultaneously...")
+    print(f"Current working directory: {os.getcwd()}")
     
     for model_key, model_config in MODELS.items():
         try:
+            print(f"🔍 Trying to load {model_config['name']}...")
+            print(f"   Main path: {model_config['path']}")
+            print(f"   Path exists: {os.path.exists(model_config['path'])}")
+            
             # Try main path first
             if os.path.exists(model_config['path']):
+                print(f"   Loading from main path...")
                 models[model_key] = load_model(model_config['path'])
                 print(f"✅ {model_config['name']} loaded from: {model_config['path']}")
                 continue
             
             # Try alternative paths if available
             if 'alternative_paths' in model_config:
+                print(f"   Trying alternative paths...")
                 for alt_path in model_config['alternative_paths']:
+                    print(f"     Alternative path: {alt_path}")
+                    print(f"     Path exists: {os.path.exists(alt_path)}")
                     if os.path.exists(alt_path):
+                        print(f"     Loading from alternative path...")
                         models[model_key] = load_model(alt_path)
                         print(f"✅ {model_config['name']} loaded from alternative path: {alt_path}")
                         break
@@ -91,6 +101,8 @@ def load_all_models():
                 
         except Exception as e:
             print(f"❌ Error loading {model_config['name']}: {e}")
+            import traceback
+            traceback.print_exc()
     
     if len(models) >= 2:
         print(f"🎉 {len(models)} models loaded successfully!")
@@ -222,9 +234,13 @@ def check_models():
             'models': {}
         })
 
+# Session-based image storage (no global variables needed)
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """Handle file upload and prediction with all three models"""
+    global current_image, current_image_filename
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'})
     
@@ -239,20 +255,22 @@ def upload_file():
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
             
+            # Store the image data in session for reuse
+            session['current_image'] = filepath
+            session['current_image_filename'] = filename
+            
             # Make predictions with all three models
             results, error = predict_image(filepath)
             
             if error:
                 return jsonify({'error': error})
             
-            # Clean up uploaded file
-            os.remove(filepath)
-            
             # Prepare response with all three models' results
             response = {
                 'success': True,
                 'filename': filename,
-                'results': results
+                'results': results,
+                'message': 'Image uploaded successfully! You can now analyze it with different models or get additional insights.'
             }
             
             # Add interpretations for each model
@@ -285,6 +303,89 @@ def upload_file():
             return jsonify({'error': f'Processing error: {str(e)}'})
     
     return jsonify({'error': 'Invalid file type'})
+
+@app.route('/analyze_current', methods=['POST'])
+def analyze_current_image():
+    """Analyze the currently uploaded image with all models (no need to re-upload)"""
+    if 'current_image' not in session:
+        return jsonify({'error': 'No image currently uploaded. Please upload an image first.'})
+    
+    try:
+        # Make predictions with all three models using the stored image
+        results, error = predict_image(session['current_image'])
+        
+        if error:
+            return jsonify({'error': error})
+        
+        # Prepare response
+        response = {
+            'success': True,
+            'filename': session['current_image_filename'],
+            'results': results,
+            'message': 'Analysis completed using the currently uploaded image!'
+        }
+        
+        # Add interpretations for each model
+        interpretations = {}
+        for model_key, result in results.items():
+            if 'error' in result:
+                interpretations[model_key] = f"Error: {result['error']}"
+                continue
+            
+            model_name = result['model_name']
+            if result['predicted_class'] == 'not_mri':
+                interpretations[model_key] = f'This image is NOT an MRI scan. The {model_name} detected that this is not a medical brain scan image.'
+            else:
+                if result['predicted_class'] == 'notumor':
+                    interpretations[model_key] = f'This image IS an MRI scan. The {model_name} found NO TUMOR in this brain scan. 🎉'
+                else:
+                    tumor_types = {
+                        'glioma': 'Glioma',
+                        'meningioma': 'Meningioma', 
+                        'pituitary': 'Pituitary'
+                    }
+                    tumor_name = tumor_types.get(result['predicted_class'], result['predicted_class'])
+                    interpretations[model_key] = f'This image IS an MRI scan. The {model_name} detected a {tumor_name} tumor in this brain scan. ⚠️'
+        
+        response['interpretations'] = interpretations
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        return jsonify({'error': f'Analysis error: {str(e)}'})
+
+@app.route('/clear_image', methods=['POST'])
+def clear_current_image():
+    """Clear the currently stored image"""
+    if 'current_image' in session and os.path.exists(session['current_image']):
+        try:
+            os.remove(session['current_image'])
+        except:
+            pass  # Ignore errors if file can't be deleted
+    
+    # Clear session data
+    session.pop('current_image', None)
+    session.pop('current_image_filename', None)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Current image cleared. You can upload a new image.'
+    })
+
+@app.route('/get_current_image_info')
+def get_current_image_info():
+    """Get information about the currently uploaded image"""
+    if 'current_image' not in session:
+        return jsonify({
+            'has_image': False,
+            'message': 'No image currently uploaded'
+        })
+    
+    return jsonify({
+        'has_image': True,
+        'filename': session['current_image_filename'],
+        'message': f'Currently analyzing: {session["current_image_filename"]}'
+    })
 
 @app.route('/health')
 def health_check():
@@ -357,6 +458,6 @@ if __name__ == '__main__':
         print("🔄 All three models will provide predictions simultaneously!")
         print("📤 Upload any image to get predictions from all three classifiers!")
         
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', port=5000, debug=False)
     else:
         print("❌ Failed to load models. Please check model files and try again.")

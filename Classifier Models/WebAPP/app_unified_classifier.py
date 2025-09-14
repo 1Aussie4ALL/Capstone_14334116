@@ -71,29 +71,42 @@ def load_all_models():
     print("🔄 Loading both models simultaneously...")
     print(f"Current working directory: {os.getcwd()}")
     
+    # Update model paths to use absolute paths
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    print(f"Base directory: {base_dir}")
+    
     for model_key, model_config in MODELS.items():
         try:
             print(f"🔍 Trying to load {model_config['name']}...")
-            print(f"   Main path: {model_config['path']}")
-            print(f"   Path exists: {os.path.exists(model_config['path'])}")
+            
+            # Convert relative paths to absolute paths
+            main_path = os.path.join(base_dir, model_config['path'].replace('../', ''))
+            print(f"   Main path: {main_path}")
+            print(f"   Path exists: {os.path.exists(main_path)}")
             
             # Try main path first
-            if os.path.exists(model_config['path']):
+            if os.path.exists(main_path):
                 print(f"   Loading from main path...")
-                models[model_key] = load_model(model_config['path'])
-                print(f"✅ {model_config['name']} loaded from: {model_config['path']}")
+                models[model_key] = load_model(main_path)
+                print(f"✅ {model_config['name']} loaded from: {main_path}")
                 continue
             
             # Try alternative paths if available
             if 'alternative_paths' in model_config:
                 print(f"   Trying alternative paths...")
                 for alt_path in model_config['alternative_paths']:
-                    print(f"     Alternative path: {alt_path}")
-                    print(f"     Path exists: {os.path.exists(alt_path)}")
-                    if os.path.exists(alt_path):
+                    # Convert relative paths to absolute paths
+                    if alt_path.startswith('../'):
+                        abs_alt_path = os.path.join(base_dir, alt_path.replace('../', ''))
+                    else:
+                        abs_alt_path = os.path.join(base_dir, alt_path)
+                    
+                    print(f"     Alternative path: {abs_alt_path}")
+                    print(f"     Path exists: {os.path.exists(abs_alt_path)}")
+                    if os.path.exists(abs_alt_path):
                         print(f"     Loading from alternative path...")
-                        models[model_key] = load_model(alt_path)
-                        print(f"✅ {model_config['name']} loaded from alternative path: {alt_path}")
+                        models[model_key] = load_model(abs_alt_path)
+                        print(f"✅ {model_config['name']} loaded from alternative path: {abs_alt_path}")
                         break
             
             if model_key not in models:

@@ -91,29 +91,6 @@ run_classifier_comparison.bat
 - `classifier_comparison_metrics.png` - Visual comparison of all metrics
 - `performance_improvements_visualization.png` - Improvement analysis
 
-### 4. **VariationB Classifier**
-- **Training Dataset**: Original + Variation B 800 dataset (geometric)
-- **Model**: `mri_variationB_classifier.h5`
-- **Evaluation**: Training and Test sets
-
-### **Step 4: Evaluate VariationB Classifier**
-```bash
-cd "2Layer_Classifier/Evaluation"
-run_variationB_evaluation.bat
-```
-
-**Outputs:**
-- `Evaluation_Results_VariationB/confusion_matrix_variationB_train_normalized.png`
-- `Evaluation_Results_VariationB/confusion_matrix_variationB_test_normalized.png`
-- `Evaluation_Results_VariationB/pr_curves_variationB_train.png`
-- `Evaluation_Results_VariationB/pr_curves_variationB_test.png`
-- `Evaluation_Results_VariationB/roc_curves_variationB_train.png`
-- `Evaluation_Results_VariationB/roc_curves_variationB_test.png`
-- `Evaluation_Results_VariationB/calibration_variationB_train.png`
-- `Evaluation_Results_VariationB/calibration_variationB_test.png`
-- `Evaluation_Results_VariationB/summary_variationB_train.csv`
-- `Evaluation_Results_VariationB/summary_variationB_test.csv`
-
 ## Understanding the Results
 
 ### **Confusion Matrices**

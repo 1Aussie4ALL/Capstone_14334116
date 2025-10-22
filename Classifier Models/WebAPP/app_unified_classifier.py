@@ -68,7 +68,7 @@ def load_all_models():
     """Load both classifier models simultaneously"""
     global models
     
-    print("🔄 Loading both models simultaneously...")
+    print("Loading all models simultaneously...")
     print(f"Current working directory: {os.getcwd()}")
     
     # Update model paths to use absolute paths
@@ -77,7 +77,7 @@ def load_all_models():
     
     for model_key, model_config in MODELS.items():
         try:
-            print(f"🔍 Trying to load {model_config['name']}...")
+            print(f"Trying to load {model_config['name']}...")
             
             # Convert relative paths to absolute paths
             main_path = os.path.join(base_dir, model_config['path'].replace('../', ''))
@@ -88,7 +88,7 @@ def load_all_models():
             if os.path.exists(main_path):
                 print(f"   Loading from main path...")
                 models[model_key] = load_model(main_path)
-                print(f"✅ {model_config['name']} loaded from: {main_path}")
+                print(f"SUCCESS: {model_config['name']} loaded from: {main_path}")
                 continue
             
             # Try alternative paths if available
@@ -106,22 +106,22 @@ def load_all_models():
                     if os.path.exists(abs_alt_path):
                         print(f"     Loading from alternative path...")
                         models[model_key] = load_model(abs_alt_path)
-                        print(f"✅ {model_config['name']} loaded from alternative path: {abs_alt_path}")
+                        print(f"SUCCESS: {model_config['name']} loaded from alternative path: {abs_alt_path}")
                         break
             
             if model_key not in models:
-                print(f"❌ Failed to load {model_config['name']}")
+                print(f"FAILED: Could not load {model_config['name']}")
                 
         except Exception as e:
-            print(f"❌ Error loading {model_config['name']}: {e}")
+            print(f"ERROR loading {model_config['name']}: {e}")
             import traceback
             traceback.print_exc()
     
     if len(models) >= 2:
-        print(f"🎉 {len(models)} models loaded successfully!")
+        print(f"SUCCESS: {len(models)} models loaded successfully!")
         return True
     else:
-        print(f"⚠️ Only {len(models)} out of {len(MODELS)} models loaded")
+        print(f"WARNING: Only {len(models)} out of {len(MODELS)} models loaded")
         return False
 
 def preprocess_image(image_path):
@@ -145,7 +145,7 @@ def preprocess_image(image_path):
         return img
         
     except Exception as e:
-        print(f"❌ Error preprocessing image: {e}")
+        print(f"ERROR preprocessing image: {e}")
         return None
 
 def predict_with_model(model, image_array, model_name):
@@ -154,29 +154,49 @@ def predict_with_model(model, image_array, model_name):
         # Make prediction
         predictions = model.predict(image_array, verbose=0)
         
-        # Get predicted class and confidence
-        predicted_class_idx = np.argmax(predictions[0])
-        predicted_class = class_names[predicted_class_idx]
-        confidence = float(predictions[0][predicted_class_idx])
+        # Check if predictions already sum to approximately 1.0 (already normalized)
+        pred_sum = np.sum(predictions[0])
         
-        # Get all class probabilities
+        if abs(pred_sum - 1.0) < 0.01:
+            # Already normalized, use as-is
+            normalized_predictions = predictions[0]
+        else:
+            # Apply softmax to normalize probabilities (ensure they sum to 1.0)
+            import tensorflow as tf
+            normalized_predictions = tf.nn.softmax(predictions[0]).numpy()
+        
+        # Get predicted class and confidence
+        predicted_class_idx = np.argmax(normalized_predictions)
+        predicted_class = class_names[predicted_class_idx]
+        
+        # Get all class probabilities (properly normalized)
         class_probabilities = {}
         for i, class_name in enumerate(class_names):
-            class_probabilities[class_name] = float(predictions[0][i])
+            class_probabilities[class_name] = round(float(normalized_predictions[i]), 4)
+        
+        # Calculate confidence as the probability of the predicted class (not max)
+        confidence = class_probabilities[predicted_class]
+        
+        # Debug: Print the exact values to see what's happening
+        print(f"DEBUG {model_name}:")
+        print(f"   Predicted class: {predicted_class}")
+        print(f"   Confidence: {confidence}")
+        print(f"   Class probabilities: {class_probabilities}")
+        print(f"   Sum of probabilities: {sum(class_probabilities.values()):.4f}")
         
         # Determine if it's an MRI
         is_mri = predicted_class != 'not_mri'
         
         return {
             'predicted_class': predicted_class,
-            'confidence': confidence,
+            'confidence': confidence,  # Already rounded from class_probabilities
             'is_mri': is_mri,
             'class_probabilities': class_probabilities,
             'model_name': model_name
         }
         
     except Exception as e:
-        print(f"❌ Error predicting with {model_name}: {e}")
+        print(f"ERROR predicting with {model_name}: {e}")
         return None
 
 def predict_image(image_path):
@@ -454,11 +474,11 @@ def model_comparison():
     })
 
 if __name__ == '__main__':
-    print("🚀 Starting Unified MRI Classifier Web App...")
+    print("Starting Unified MRI Classifier Web App...")
     print("=" * 60)
-    print("🔄 Multi-Model Support:")
+    print("Multi-Model Support:")
     for key, config in MODELS.items():
-        print(f"   • {config['name']}")
+        print(f"   - {config['name']}")
         print(f"     - {config['description']}")
         print(f"     - {config['training_data']}")
         print(f"     - Expected accuracy: {config['expected_accuracy']}")
@@ -466,11 +486,11 @@ if __name__ == '__main__':
     
     # Load all models at startup
     if load_all_models():
-        print("🌐 Starting web server...")
-        print("📱 Open your browser and go to: http://localhost:5000")
-        print("🔄 All three models will provide predictions simultaneously!")
-        print("📤 Upload any image to get predictions from all three classifiers!")
+        print("Starting web server...")
+        print("Open your browser and go to: http://localhost:5000")
+        print("All three models will provide predictions simultaneously!")
+        print("Upload any image to get predictions from all three classifiers!")
         
         app.run(host='0.0.0.0', port=5000, debug=False)
     else:
-        print("❌ Failed to load models. Please check model files and try again.")
+        print("Failed to load models. Please check model files and try again.")

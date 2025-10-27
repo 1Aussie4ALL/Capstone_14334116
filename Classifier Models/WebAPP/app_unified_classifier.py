@@ -24,7 +24,7 @@ MODELS = {
         'description': 'Original MRI classifier trained on 5,779 images',
         'training_data': '5,779 images',
         'expected_accuracy': '95%+',
-        'color': '#3498db'
+        'color': '#4a90e2'
     },
     'variationA': {
         'name': 'VariationA Enhanced Classifier',
@@ -50,7 +50,7 @@ MODELS = {
         'description': 'Enhanced classifier with geometric augmentation',
         'training_data': '9,047 images (5,779 original + 3,268 augmented)',
         'expected_accuracy': '97.4%+',
-        'color': '#27ae60'
+        'color': '#6c5ce7'
     }
 }
 

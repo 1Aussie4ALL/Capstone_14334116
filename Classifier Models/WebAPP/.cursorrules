@@ -1,0 +1,159 @@
+# Cursor IDE Configuration for Unified MRI Classifier
+
+## Project Overview
+This is a Flask web application that loads three deep learning models (CNN-based classifiers) for brain MRI tumor classification. The application runs all three models simultaneously on uploaded images.
+
+## Key Files
+
+### Main Application
+- `app_unified_classifier.py` - Flask server and prediction logic
+- `index_unified_classifier.html` - Frontend template (HTML/JS/CSS)
+- `run_unified_webapp.bat` - Launch script
+
+### Dependencies
+- `requirements.txt` - Python packages needed
+- `setup.bat` - Automated setup script
+
+### Documentation
+- `README.md` - Complete documentation
+- `QUICKSTART.md` - 5-minute quick start guide
+
+## How to Run
+
+### Method 1: Batch File
+```bash
+run_unified_webapp.bat
+```
+
+### Method 2: Python Command
+```bash
+python app_unified_classifier.py
+```
+
+### Method 3: Flask
+```bash
+flask --app app_unified_classifier run
+```
+
+## Model Paths
+
+The application expects these model files:
+
+```
+../2Layer_Classifier/Models/mri_2layer_classifier_final.h5
+../VariationA_Enchanced/Models/mri_variationA_classifier_final.h5
+../VariationB_Enhanced/Models/mri_variationB_classifier.h5
+```
+
+## Dependencies Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+Required packages:
+- tensorflow>=2.8.0
+- opencv-python>=4.5.0
+- numpy>=1.21.0
+- Flask>=2.0.0
+- Werkzeug>=2.0.0
+- Pillow>=8.3.0
+- matplotlib>=3.5.0
+- scikit-learn>=1.0.0
+- seaborn>=0.11.0
+
+## Project Structure
+
+```
+WebAPP/
+├── app_unified_classifier.py      # Main Flask app
+├── run_unified_webapp.bat        # Launch script
+├── setup.bat                      # Setup script
+├── requirements.txt               # Dependencies
+├── README.md                     # Full docs
+├── QUICKSTART.md                  # Quick guide
+├── templates/
+│   └── index_unified_classifier.html
+├── uploads/                       # User uploads
+└── ../ (parent directories)
+    ├── 2Layer_Classifier/Models/
+    ├── VariationA_Enchanced/Models/
+    └── VariationB_Enhanced/Models/
+```
+
+## Key Functions in app_unified_classifier.py
+
+- Lines 76-120: `load_models()` - Load all three models
+- Lines 150-220: `predict_with_model()` - Make predictions
+- Lines 250-280: Flask routes for web interface
+- Lines 20-75: Model configurations
+
+## Features
+
+1. Multi-model inference (3 models simultaneously)
+2. Real-time predictions
+3. Side-by-side comparison
+4. Confidence scoring
+5. Professional UI
+
+## Testing
+
+```bash
+# Health check
+curl http://localhost:5000/health
+
+# Expected response:
+# {"status":"healthy","models_loaded":3}
+```
+
+## Troubleshooting
+
+### Import Errors
+- Run `pip install -r requirements.txt`
+- Check Python version: `python --version`
+
+### Model Loading Errors
+- Verify model files exist
+- Check console output for paths
+- Ensure sufficient RAM (3GB+)
+
+### Port Conflicts
+- Kill existing Flask processes
+- Change port in app: `app.run(port=5001)`
+
+## Development Notes
+
+- **Debug Mode**: Currently OFF (change to True for development)
+- **Port**: 5000 (default Flask port)
+- **Host**: 0.0.0.0 (all network interfaces)
+- **Memory**: Models require ~2-3GB total
+
+## Cursor Commands
+
+In Cursor terminal:
+```bash
+cd "Classifier Models/WebAPP"
+python app_unified_classifier.py
+```
+
+Or use the run configuration:
+1. Open Cursor
+2. Navigate to `Classifier Models/WebAPP`
+3. Press F5 or use "Run Python File" command
+4. Open browser to localhost:5000
+
+## Environment
+
+- **Python**: 3.8+
+- **OS**: Windows (primary), macOS/Linux compatible
+- **Framework**: Flask 2.0+
+- **ML Framework**: TensorFlow 2.8+
+- **Image Processing**: OpenCV, PIL
+
+## Important Notes for Cursor
+
+- Models are loaded at startup (takes ~30 seconds)
+- All models run in same process (shared memory)
+- Uploads are stored in `uploads/` folder
+- Logs appear in console (not file-based)
+
